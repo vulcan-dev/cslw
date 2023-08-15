@@ -517,3 +517,89 @@ slwTable_push(slwState* slw, slwTable* slt)
         lua_settable(L, -3);
     }
 }
+
+SLW_API slwTable*
+slwTable_get(slwState* slw)
+{
+    slw_assert(slw != NULL);
+    lua_State* L = slw->LState;
+
+    if (!lua_istable(L, -1))
+        return NULL;
+
+    slwTable* tbl = (slwTable*)slw_malloc(sizeof(slwTable));
+    tbl->elements = NULL;
+
+    int tableLen = lua_rawlen(L, -1);
+    slwTableValue_t value;
+
+    // KVP Table
+    if (tableLen == 0)
+    {
+        lua_pushnil(L);
+
+        while (lua_next(L, -2) != 0) {
+            if (lua_isstring(L, -2)) {
+                value.name = lua_tostring(L, -2);
+                if (lua_isstring(L, -1)) {
+                    value.ltype = LUA_TSTRING;
+                    value.value.s = lua_tostring(L, -1);
+                } else if (lua_isnumber(L, -1)) {
+                    value.ltype = LUA_TNUMBER;
+                    value.value.d = lua_tonumber(L, -1);
+                } else if (lua_isboolean(L, -1)) {
+                    value.ltype = LUA_TBOOLEAN;
+                    value.value.b = lua_toboolean(L, -1);
+                } else if (lua_istable(L, -1)) {
+                    value.ltype = LUA_TTABLE;
+                    value.value.t = slwTable_get(slw);
+                }
+
+                tbl->elements = (slwTableValue_t*)slw_realloc(tbl->elements, sizeof(slwTableValue_t) * (tableLen + 1));
+                tbl->elements[tableLen++] = value;
+
+                lua_pop(L, 1);
+            }
+        }
+    } 
+    // Index Based Table
+    else
+    {
+        tbl->elements = (slwTableValue_t*)slw_malloc(sizeof(slwTableValue_t) * tableLen);
+        for (size_t i = 1; i <= tableLen; ++i)
+        {
+            value.name = NULL;
+
+            lua_pushinteger(L, i);
+            lua_gettable(L, -2);
+
+            const int type = lua_type(L, -1);
+            switch (type)
+            {
+                case LUA_TSTRING:
+                    value.ltype = LUA_TSTRING;
+                    value.value.s = lua_tostring(L, -1);
+                    break;
+                case LUA_TNUMBER:
+                    value.ltype = LUA_TNUMBER;
+                    value.value.d = lua_tonumber(L, -1);
+                    break;
+                case LUA_TBOOLEAN:
+                    value.ltype = LUA_TBOOLEAN;
+                    value.value.b = lua_toboolean(L, -1);
+                    break;
+                case LUA_TTABLE:
+                    value.ltype = LUA_TTABLE;
+                    value.value.t = slwTable_get(slw);
+                    break;
+            }
+
+            tbl->elements[i-1] = value;
+            lua_pop(L, 1);
+        }
+    }
+
+    tbl->size = tableLen;
+
+    return tbl;
+}

@@ -24,6 +24,8 @@
     SLW_EXTERN_C_BEGIN
 #endif
 
+#define SLW_RECURSION_DEPTH 32
+
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
@@ -33,6 +35,7 @@
 #endif
 
 #include <stdint.h>
+#include <stdbool.h>
 
 // Type Definitions
 //------------------------------------------------------------------------
@@ -41,10 +44,6 @@ typedef struct slwTable slwTable;
 
 // Definitions
 //------------------------------------------------------------------------
-#ifndef SLW_IGNORE_BOOL
-    typedef enum { false, true } bool;
-#endif
-
 #if defined(_WIN32)
     #if defined(SLW_EXPORT)
         #define SLW_API __declspec(dllexport)
@@ -68,6 +67,7 @@ typedef struct slwTable slwTable;
 
 #define slw_internal static
 #define slw_malloc(sz) malloc(sz)
+#define slw_realloc(b, sz) realloc(b, sz)
 #define slw_free(b) free(b)
 
 #if LUA_VERSION_NUM >= 504 && defined(LUA_COMPAT_BITLIB)
@@ -245,8 +245,7 @@ SLW_API slwTable* slwTable_create(slwState* slw, ...);
 SLW_API void      slwTable_free(slwTable* slt);
 
 SLW_API void      slwTable_push(slwState* slw, slwTable* slt);
-
-// make_kvp
+SLW_API slwTable* slwTable_get(slwState* slw);
 
 #if defined(SLW_LANGUAGE_CPP)
     SLW_EXTERN_C_END
