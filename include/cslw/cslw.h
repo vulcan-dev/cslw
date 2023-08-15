@@ -241,7 +241,8 @@ struct slwTable
 #define slwt_tboolean(x) ((slwTableValue_t) {.ltype = LUA_TBOOLEAN, .value.b = x})
 #define   slwt_ttable(x) ((slwTableValue_t) {.ltype = LUA_TTABLE, .value.t = x})
 
-SLW_API slwTable* slwTable_create(slwState* slw, ...);
+SLW_API slwTable* slwTable_createkv(slwState* slw, ...);
+SLW_API slwTable* slwTable_createi(slwState* slw, ...);
 SLW_API void      slwTable_free(slwTable* slt);
 
 SLW_API void      slwTable_push(slwState* slw, slwTable* slt);

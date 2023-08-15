@@ -430,7 +430,7 @@ slwState_getnil(slwState* slw, const char* name)
 
 // Table Functions
 SLW_API slwTable*
-slwTable_create(slwState* slw, ...)
+slwTable_createkv(slwState* slw, ...)
 {
     slw_assert(slw != NULL);
 
@@ -472,6 +472,43 @@ slwTable_create(slwState* slw, ...)
     return tbl;
 }
 
+SLW_API slwTable*
+slwTable_createi(slwState* slw, ...)
+{
+    slw_assert(slw != NULL);
+
+    int tableLen = 0;
+
+    // Get length
+    va_list args;
+    va_start(args, slw);
+    while (1)
+    {
+        if (va_arg(args, slwTableValue_t*) == NULL)
+            break;
+        tableLen++;
+    }
+    va_end(args);
+    va_start(args, slw);
+
+    slwTable* tbl = (slwTable*)slw_malloc(sizeof(slwTable));
+    tbl->elements = (slwTableValue_t*)slw_malloc(sizeof(slwTableValue_t) * tableLen);
+    tbl->size = tableLen;
+
+    for (int i = 0; i < tableLen; i++)
+    {
+        slwTableValue_t* value = va_arg(args, slwTableValue_t*);
+
+        tbl->elements[i].name = NULL;
+        tbl->elements[i].ltype = value->ltype;
+        tbl->elements[i].value = value->value;
+    }
+
+    va_end(args);
+
+    return tbl;
+}
+
 SLW_API void
 slwTable_free(slwTable* slt)
 {
@@ -483,38 +520,65 @@ slwTable_free(slwTable* slt)
     free(slt);
 }
 
+slw_internal void
+_slwTable_push_value(slwState* slw, slwTableValue_t el)
+{
+    lua_State* L = slw->LState;
+
+    switch (el.ltype)
+    {
+        case LUA_TSTRING:
+            lua_pushstring(L, el.value.s);
+            break;
+        case LUA_TNUMBER:
+            lua_pushnumber(L, el.value.d);
+            break;
+        case LUA_TBOOLEAN:
+            lua_pushboolean(L, el.value.b);
+            break;
+        case LUA_TTABLE:
+            slwTable_push(slw, el.value.t);
+            break;
+        default:
+            break;
+    }
+}
+
 SLW_API void
 slwTable_push(slwState* slw, slwTable* slt)
 {
     slw_assert(slw != NULL);
     slw_assert(slt != NULL);
+
+    if (slt->size == 0)
+        return;
+
     lua_State* L = slw->LState;
 
-    lua_createtable(L, 0, slt->size);
-    for (size_t i = 0; i < slt->size; i++)
+    // KVP Table
+    if (slt->elements[0].name)
     {
-        slwTableValue_t el = slt->elements[i];
-        lua_pushstring(L, el.name);
-        switch (el.ltype)
+        lua_createtable(L, 0, slt->size);
+        for (size_t i = 0; i < slt->size; i++)
         {
-            case LUA_TSTRING:
-                lua_pushstring(L, el.value.s);
-                break;
-            case LUA_TNUMBER:
-                lua_pushnumber(L, el.value.d);
-                break;
-            case LUA_TBOOLEAN:
-                lua_pushboolean(L, el.value.b);
-                break;
-            case LUA_TTABLE:
-                slwTable_push(slw, el.value.t);
-                break;
-            default:
-                slw_assert(false);
-                break;
+            slwTableValue_t el = slt->elements[i];
+            lua_pushstring(L, el.name);
+
+            _slwTable_push_value(slw, el);
+
+            lua_settable(L, -3);
         }
 
-        lua_settable(L, -3);
+        return;
+    }
+
+    // Indexed Table
+    lua_createtable(L, slt->size, 0);
+    for (size_t i = 1; i <= slt->size; ++i)
+    {
+        slwTableValue_t el = slt->elements[i-1];
+        _slwTable_push_value(slw, el);
+        lua_rawseti(L, -2, i);
     }
 }
 

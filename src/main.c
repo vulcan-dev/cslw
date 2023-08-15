@@ -4,19 +4,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//for k, v in pairs(MY_TABLE) do
-    //if type(v) == "table" then
-        //print(k)
-        //for k1, v1 in pairs(v) do
-        // print(k1, v1)
-        //end
-    //else
-        //print(k, v)
-    //end
-//end
-
 #define mlstring(...) #__VA_ARGS__
 const char* lua_code = mlstring(
+    print("==== LUA START ====")
+
+    for i, v in ipairs(MY_INDEXED_TABLE) do
+        print("MY_INDEXED_TABLE", i, v)
+    end
+
+    io.write("\n")
+
+    for k, v in pairs(MY_TABLE) do
+        if type(v) == "table" then
+            print(k)
+            for k1, v1 in pairs(v) do
+            print(k1, v1)
+            end
+        else
+            print(k, v)
+        end
+    end
+
     SOME_GLOBAL = "Hello World!";
 
     USER_TABLE = {
@@ -49,6 +57,9 @@ const char* lua_code = mlstring(
         "marie",
         "doe"
     }
+
+    print("==== LUA END ====")
+    io.write("\n")
 );
 
 int l_my_function(lua_State* L)
@@ -119,12 +130,12 @@ int main(void)
     }
 
     { // Test table
-        slwTable* user = slwTable_create(slw,
+        slwTable* user = slwTable_createkv(slw,
             "name", slwt_tstring("dan"),
             NULL
         );
 
-        slwTable* tbl = slwTable_create(slw,
+        slwTable* tbl = slwTable_createkv(slw,
             "C_GLOBAL_STRING", slwt_tstring("Hello"),
             "C_GLOBAL_NUMBER", slwt_tnumber(4.20),
             "user1",           slwt_ttable(user),
@@ -132,11 +143,17 @@ int main(void)
         );
 
         slwState_set(slw, "MY_TABLE", tbl);
+        slwTable_free(tbl);
+    }
 
-        // todo: check if I'm freeing everything correctly, I think I changed how elements are created? I can't remember. (I could check the file but not now).
+    { // Text indexed table
+        slwTable* tbl = slwTable_createi(slw,
+            slwt_tstring("string1"),
+            slwt_tnumber(4.20),
+            NULL);
 
-        slw_free(tbl->elements);
-        slw_free(tbl);
+        slwState_set(slw, "MY_INDEXED_TABLE", tbl);
+        slwTable_free(tbl);
     }
 
     slwState_set(slw, "my_func", (lua_CFunction)l_my_function);
