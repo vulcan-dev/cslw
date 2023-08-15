@@ -1,7 +1,38 @@
-#define SLW_ENABLE_ASSERTIONS 1
+#define SLW_ENABLE_ASSERTIONS
 #include <cslw/cslw.h>
 
 #include <stdio.h>
+#include <stdlib.h>
+
+#define mlstring(...) #__VA_ARGS__
+const char* lua_code = mlstring(
+    for k, v in pairs(MY_TABLE) do
+        if type(v) == "table" then
+            print(k)
+            for k1, v1 in pairs(v) do
+                print(k1, v1)
+            end
+        else
+            print(k, v)
+        end
+    end
+
+    SOME_GLOBAL = "Hello World!";
+
+    HASH_TABLE =
+    {
+        a = 1,
+        b = 2,
+        c = "Hello World"
+    }
+
+    NAME_LIST =
+    {
+        "john",
+        "marie",
+        "doe"
+    }
+);
 
 int l_my_function(lua_State* L)
 {
@@ -20,11 +51,28 @@ int main(void)
         return 1;
     }
 
-    slwState_set(slw, "my_func", (lua_CFunction)l_my_function);
-    slwState_set(slw, "my_string", "Hello World!");
-    slwState_runstring(slw, "my_func()");
+    {
+        slwTable* user = slwTable_create(slw,
+            "name", slwt_tstring("dan"),
+            NULL
+        );
 
-    printf("my_string: %s\n", slwState_get(slw, "my_string").s);
+        slwTable* tbl = slwTable_create(slw,
+            "C_GLOBAL_STRING", slwt_tstring("Hello"),
+            "C_GLOBAL_NUMBER", slwt_tnumber(4.20),
+            "user1", slwt_ttable(user),
+            NULL
+        );
+
+        slwTable_push(slw, tbl);
+        lua_setglobal(slw->LState, "MY_TABLE");
+        slw_free(tbl);
+    }
+
+    slwState_set(slw, "my_func", (lua_CFunction)l_my_function);
+    slwState_runstring(slw, lua_code);
+
+    printf("SOME_GLOBAL: %s\n", slwState_get(slw, "SOME_GLOBAL").s);
     
     // Cleanup
     slwState_destroy(slw);

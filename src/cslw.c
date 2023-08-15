@@ -1,5 +1,8 @@
+#define SLW_ENABLE_ASSERTIONS
 #include "cslw/cslw.h"
 #include <stdlib.h>
+#include <assert.h>
+#include <memory.h>
 
 // Functions
 //------------------------------------------------------------------------
@@ -7,7 +10,7 @@
 SLW_API void
 slwState_destroy(slwState* slw)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     if (slw->LState)
         slwState_close(slw);
 
@@ -40,8 +43,8 @@ slwState_new_with(const uint32_t libs)
 SLW_API slwState*
 slwState_new_from_slws(slwState* slw)
 {
-    slw_assert(slw == NULL);
-    slw_assert(slw->Lslw == NULL);
+    slw_assert(slw != NULL);
+    slw_assert(slw != NULL);
 
     slwState* newSLW = (slwState*)slw_malloc(sizeof(slwState));
     if (!newSLW)
@@ -68,7 +71,7 @@ SLW_API slwState* slwState_new_from_luas(lua_State* L)
 SLW_API void
 slwState_close(slwState* slw)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_close(slw->LState);
     slw->LState = NULL;
 }
@@ -76,7 +79,7 @@ slwState_close(slwState* slw)
 SLW_API void
 slwState_openlibraries(slwState* slw, const uint32_t libs)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
 
     luaopen_base(slw->LState);
     if (libs & slw_lib_package)
@@ -112,14 +115,14 @@ slwState_openlib(slwState* slw, const char* name, lua_CFunction func)
 
 SLW_API int slwState_runstring(slwState* slw, const char* str)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_State* L = slw->LState;
     return luaL_loadstring(L, str) || lua_pcall(L, 0, LUA_MULTRET, 0);
 }
 
 SLW_API int slwState_runfile(slwState* slw, const char* filename)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_State* L = slw->LState;
     return luaL_loadfile(L, filename) || lua_pcall(L, 0, LUA_MULTRET, 0);
 }
@@ -128,13 +131,13 @@ SLW_API int slwState_runfile(slwState* slw, const char* filename)
 //------------------------------------------------------------------------
 SLW_API void slwState_pushstring(slwState* slw, const char* str)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_pushstring(slw->LState, str);
 }
 
 SLW_API const char* slwState_pushfstring(slwState* slw, const char* fmt, ...)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
 
     va_list args;
     va_start(args, fmt);
@@ -146,43 +149,43 @@ SLW_API const char* slwState_pushfstring(slwState* slw, const char* fmt, ...)
 
 SLW_API void slwState_pushnumber(slwState* slw, double num)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_pushnumber(slw->LState, num);
 }
 
 SLW_API void slwState_pushint(slwState* slw, int64_t num)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_pushinteger(slw->LState, num);
 }
 
 SLW_API void slwState_pushbool(slwState* slw, bool b)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_pushboolean(slw->LState, b);
 }
 
 SLW_API void slwState_pushcfunction(slwState* slw, lua_CFunction fn)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_pushcfunction(slw->LState, fn);
 }
 
 SLW_API void slwState_pushlightudata(slwState* slw, void* data)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_pushlightuserdata(slw->LState, data);
 }
 
 SLW_API void slwState_pushcclosure(slwState* slw, lua_CFunction fn, int n)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_pushcclosure(slw->LState, fn, n);
 }
 
 SLW_API void slwState_pushnil(slwState* slw)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_pushnil(slw->LState);
 }
 
@@ -191,7 +194,7 @@ SLW_API void slwState_pushnil(slwState* slw)
 SLW_API void
 slwState_setstring(slwState* slw, const char* name, const char* str)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_pushstring(slw->LState, str);
 
     lua_setglobal(slw->LState, name);
@@ -200,7 +203,7 @@ slwState_setstring(slwState* slw, const char* name, const char* str)
 SLW_API const char*
 slwset_setfstring(slwState* slw, const char* name, const char* fmt, ...)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
 
     va_list args;
     va_start(args, fmt);
@@ -215,7 +218,7 @@ slwset_setfstring(slwState* slw, const char* name, const char* fmt, ...)
 SLW_API void
 slwState_setnumber(slwState* slw, const char* name, double num)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_pushnumber(slw->LState, num);
 
     lua_setglobal(slw->LState, name);
@@ -224,7 +227,7 @@ slwState_setnumber(slwState* slw, const char* name, double num)
 SLW_API void
 slwState_setint(slwState* slw, const char* name, int64_t num)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_pushinteger(slw->LState, num);
 
     lua_setglobal(slw->LState, name);
@@ -233,7 +236,7 @@ slwState_setint(slwState* slw, const char* name, int64_t num)
 SLW_API void
 slwState_setbool(slwState* slw, const char* name, bool b)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_pushboolean(slw->LState, b);
 
     lua_setglobal(slw->LState, name);
@@ -242,7 +245,7 @@ slwState_setbool(slwState* slw, const char* name, bool b)
 SLW_API void
 slwState_setcfunction(slwState* slw, const char* name, lua_CFunction fn)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_pushcfunction(slw->LState, fn);
 
     lua_setglobal(slw->LState, name);
@@ -251,7 +254,7 @@ slwState_setcfunction(slwState* slw, const char* name, lua_CFunction fn)
 SLW_API void
 slwState_setlightudata(slwState* slw, const char* name, void* data)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_pushlightuserdata(slw->LState, data);
 
     lua_setglobal(slw->LState, name);
@@ -260,7 +263,7 @@ slwState_setlightudata(slwState* slw, const char* name, void* data)
 SLW_API void
 slwState_setcclosure(slwState* slw, const char* name, lua_CFunction fn, int n)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_pushcclosure(slw->LState, fn, n);
 
     lua_setglobal(slw->LState, name);
@@ -269,7 +272,7 @@ slwState_setcclosure(slwState* slw, const char* name, lua_CFunction fn, int n)
 SLW_API void
 slwState_setnil(slwState* slw, const char* name)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_pushnil(slw->LState);
 
     lua_setglobal(slw->LState, name);
@@ -280,7 +283,7 @@ slwState_setnil(slwState* slw, const char* name)
 SLW_API slwReturnValue
 slwState_type_to_c(slwState* slw, const int type, const int idx)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     slwReturnValue ret;
     ret.exists = true;
 
@@ -322,7 +325,7 @@ slwState_type_to_c(slwState* slw, const int type, const int idx)
 SLW_API slwReturnValue
 slwState_getstring(slwState* slw, const char* name)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_State* L = slw->LState;
     lua_getglobal(L, name);
     if (lua_isstring(L, -1))
@@ -334,7 +337,7 @@ slwState_getstring(slwState* slw, const char* name)
 SLW_API slwReturnValue
 slwState_getnumber(slwState* slw, const char* name)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_State* L = slw->LState;
     lua_getglobal(L, name);
     if (lua_isnumber(L, -1))
@@ -346,7 +349,7 @@ slwState_getnumber(slwState* slw, const char* name)
 SLW_API slwReturnValue
 slwState_getint(slwState* slw, const char* name)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_State* L = slw->LState;
     lua_getglobal(L, name);
     if (lua_isinteger(L, -1))
@@ -358,7 +361,7 @@ slwState_getint(slwState* slw, const char* name)
 SLW_API slwReturnValue
 slwState_getbool(slwState* slw, const char* name)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_State* L = slw->LState;
     lua_getglobal(L, name);
     if (lua_isboolean(L, -1))
@@ -370,7 +373,7 @@ slwState_getbool(slwState* slw, const char* name)
 SLW_API slwReturnValue
 slwState_getcfunction(slwState* slw, const char* name)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_State* L = slw->LState;
     lua_getglobal(L, name);
     if (lua_iscfunction(L, -1))
@@ -382,7 +385,7 @@ slwState_getcfunction(slwState* slw, const char* name)
 SLW_API slwReturnValue
 slwState_getfunction(slwState* slw, const char* name)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_State* L = slw->LState;
     lua_getglobal(L, name);
     if (lua_iscfunction(L, -1))
@@ -394,7 +397,7 @@ slwState_getfunction(slwState* slw, const char* name)
 SLW_API slwReturnValue
 slwState_getuserdata(slwState* slw, const char* name)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_State* L = slw->LState;
     lua_getglobal(L, name);
     if (lua_isuserdata(L, -1))
@@ -406,11 +409,101 @@ slwState_getuserdata(slwState* slw, const char* name)
 SLW_API slwReturnValue
 slwState_getnil(slwState* slw, const char* name)
 {
-    slw_assert(slw == NULL);
+    slw_assert(slw != NULL);
     lua_State* L = slw->LState;
     lua_getglobal(L, name);
     if (lua_isnil(L, -1))
         return (slwReturnValue){.exists = true, .b = true};
 
     return (slwReturnValue){.exists = false, .b = false};
+}
+
+// Table Functions
+SLW_API slwTable*
+slwTable_create(slwState* slw, ...)
+{
+    slw_assert(slw != NULL);
+
+    int numEntries = 0;
+
+    va_list args;
+    va_start(args, slw);
+    while (1)
+    {
+        const char* key = va_arg(args, const char*);
+        if (key == NULL)
+            break;
+        
+        slw_assert(va_arg(args, slwTableValue_t*) != NULL);
+        numEntries += 2; // We do an assert below to make sure it's in multiples of 2
+    }
+    va_end(args);
+    slw_assert(numEntries % 2 == 0);
+    va_start(args, slw);
+
+    const size_t tableLen = numEntries / 2;
+
+    slwTable* tbl = (slwTable*)slw_malloc(sizeof(slwTable));
+    tbl->elements = (slwTableValue_t*)slw_malloc(sizeof(slwTableValue_t) * tableLen);
+    tbl->size = tableLen;
+
+    for (int i = 0; i < tableLen; i++)
+    {
+        const char* key = va_arg(args, const char*);
+        slwTableValue_t* value = va_arg(args, slwTableValue_t*);
+
+        tbl->elements[i].name = key;
+        tbl->elements[i].ltype = value->ltype;
+        tbl->elements[i].value = value->value;
+    }
+
+    va_end(args);
+
+    return tbl;
+}
+
+SLW_API void
+slwTable_free(slwTable* slt)
+{
+    slw_assert(slt != NULL);
+
+    free(slt->elements);
+    slt->elements = NULL;
+    slt->size = 0;
+    free(slt);
+}
+
+SLW_API void
+slwTable_push(slwState* slw, slwTable* slt)
+{
+    slw_assert(slw != NULL);
+    slw_assert(slt != NULL);
+    lua_State* L = slw->LState;
+
+    lua_createtable(L, 0, slt->size);
+    for (size_t i = 0; i < slt->size; i++)
+    {
+        slwTableValue_t el = slt->elements[i];
+        lua_pushstring(L, el.name);
+        switch (el.ltype)
+        {
+            case LUA_TSTRING:
+                lua_pushstring(L, el.value.s);
+                break;
+            case LUA_TNUMBER:
+                lua_pushnumber(L, el.value.d);
+                break;
+            case LUA_TBOOLEAN:
+                lua_pushboolean(L, el.value.b);
+                break;
+            case LUA_TTABLE:
+                slwTable_push(slw, el.value.t);
+                break;
+            default:
+                slw_assert(false);
+                break;
+        }
+
+        lua_settable(L, -3);
+    }
 }

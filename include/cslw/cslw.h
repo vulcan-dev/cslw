@@ -63,7 +63,7 @@
 
 #define slw_internal static
 #define slw_malloc(sz) malloc(sz)
-#define slw_free free
+#define slw_free(b) free(b)
 
 #if LUA_VERSION_NUM >= 504 && defined(LUA_COMPAT_BITLIB)
 #define __cslw_bit32_manual 1
@@ -204,6 +204,45 @@ SLW_API slwReturnValue slwState_getfunction(slwState* slw, const char* name);
 SLW_API slwReturnValue slwState_getcfunction(slwState* lwState, const char* name);
 SLW_API slwReturnValue slwState_getuserdata(slwState* lwState, const char* name);
 SLW_API slwReturnValue slwState_getnil(slwState* slw, const char* name);
+
+// Table Stuff
+typedef struct slwTableValue_t slwTableValue_t;
+typedef struct slwTable slwTable;
+
+typedef union slwValue_u
+{
+    const char* s;
+    double d;
+    int i;
+    bool b;
+    slwTable* t;
+} slwValue_u;
+
+struct slwTableValue_t
+{
+    const char* name; // optional for indexed tables
+    uint8_t ltype;
+    slwValue_u value;
+};
+
+struct slwTable
+{
+    slwTableValue_t* elements;
+    size_t size;
+};
+
+#define  slwt_tstring(x) ((slwTableValue_t) {.ltype = LUA_TSTRING, .value.s = x})
+#define  slwt_tnumber(x) ((slwTableValue_t) {.ltype = LUA_TNUMBER, .value.d = x})
+#define slwt_tinteger(x) ((slwTableValue_t) {.ltype = LUA_TNUMBER, .value.i = x})
+#define slwt_tboolean(x) ((slwTableValue_t) {.ltype = LUA_TBOOLEAN, .value.b = x})
+#define   slwt_ttable(x) ((slwTableValue_t) {.ltype = LUA_TTABLE, .value.t = x})
+
+SLW_API slwTable* slwTable_create(slwState* slw, ...);
+SLW_API void      slwTable_free(slwTable* slt);
+
+SLW_API void      slwTable_push(slwState* slw, slwTable* slt);
+
+// make_kvp
 
 #if defined(SLW_LANGUAGE_CPP)
     SLW_EXTERN_C_END
