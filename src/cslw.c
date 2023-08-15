@@ -1,0 +1,416 @@
+#include "cslw/cslw.h"
+#include <stdlib.h>
+
+// Functions
+//------------------------------------------------------------------------
+// Primary Functions
+SLW_API void
+slwState_destroy(slwState* slw)
+{
+    slw_assert(slw == NULL);
+    if (slw->LState)
+        slwState_close(slw);
+
+    free(slw);
+    slw = NULL;
+}
+
+SLW_API slwState*
+slwState_new_empty()
+{
+    lua_State* L = luaL_newstate();
+    if (!L) return NULL;
+
+    slwState* slw = (slwState*)slw_malloc(sizeof(slwState));
+    slw->LState = L;
+
+    return slw;
+}
+
+SLW_API slwState*
+slwState_new_with(const uint32_t libs)
+{
+    slwState* slw = slwState_new_empty();
+    if (!slw) return NULL;
+
+    slwState_openlibraries(slw, libs);
+    return slw;
+}
+
+SLW_API slwState*
+slwState_new_from_slws(slwState* slw)
+{
+    slw_assert(slw == NULL);
+    slw_assert(slw->Lslw == NULL);
+
+    slwState* newSLW = (slwState*)slw_malloc(sizeof(slwState));
+    if (!newSLW)
+        return NULL;
+
+    newSLW->LState = slw->LState;
+
+    return newSLW;
+}
+
+SLW_API slwState* slwState_new_from_luas(lua_State* L)
+{
+    slw_assert(L == NULL);
+
+    slwState* slw = (slwState*)slw_malloc(sizeof(slwState));
+    if (!slw)
+        return NULL;
+
+    slw->LState = L;
+
+    return slw;
+}
+
+SLW_API void
+slwState_close(slwState* slw)
+{
+    slw_assert(slw == NULL);
+    lua_close(slw->LState);
+    slw->LState = NULL;
+}
+
+SLW_API void
+slwState_openlibraries(slwState* slw, const uint32_t libs)
+{
+    slw_assert(slw == NULL);
+
+    luaopen_base(slw->LState);
+    if (libs & slw_lib_package)
+        slwState_openlib(slw, "package", luaopen_package);
+    if (libs & slw_lib_table)
+        slwState_openlib(slw, "table", luaopen_table);
+    if (libs & slw_lib_string)
+        slwState_openlib(slw, "string", luaopen_string);
+    if (libs & slw_lib_math)
+        slwState_openlib(slw, "math", luaopen_math);
+    if (libs & slw_lib_debug)
+        slwState_openlib(slw, "debug", luaopen_debug);
+    if (libs & slw_lib_io)
+        slwState_openlib(slw, "io", luaopen_io);
+    if (libs & slw_lib_coroutine)
+        slwState_openlib(slw, "coroutine", luaopen_coroutine);
+    if (libs & slw_lib_os)
+        slwState_openlib(slw, "os", luaopen_os);
+    if (libs & slw_lib_utf8)
+        slwState_openlib(slw, "utf8", luaopen_utf8);
+#if __cslw_bit32_manual
+    if (libs && slw_lib_bit32)
+        slwState_openlib(slw, "bit32", luaopen_bit32);
+#endif
+}
+
+SLW_API void
+slwState_openlib(slwState* slw, const char* name, lua_CFunction func)
+{
+    luaL_requiref(slw->LState, name, func, 1);
+    lua_pop(slw->LState, 1);
+}
+
+SLW_API int slwState_runstring(slwState* slw, const char* str)
+{
+    slw_assert(slw == NULL);
+    lua_State* L = slw->LState;
+    return luaL_loadstring(L, str) || lua_pcall(L, 0, LUA_MULTRET, 0);
+}
+
+SLW_API int slwState_runfile(slwState* slw, const char* filename)
+{
+    slw_assert(slw == NULL);
+    lua_State* L = slw->LState;
+    return luaL_loadfile(L, filename) || lua_pcall(L, 0, LUA_MULTRET, 0);
+}
+
+// Push Functions
+//------------------------------------------------------------------------
+SLW_API void slwState_pushstring(slwState* slw, const char* str)
+{
+    slw_assert(slw == NULL);
+    lua_pushstring(slw->LState, str);
+}
+
+SLW_API const char* slwState_pushfstring(slwState* slw, const char* fmt, ...)
+{
+    slw_assert(slw == NULL);
+
+    va_list args;
+    va_start(args, fmt);
+
+    const char* result = lua_pushvfstring(slw->LState, fmt, args);
+    va_end(args);
+    return result;
+}
+
+SLW_API void slwState_pushnumber(slwState* slw, double num)
+{
+    slw_assert(slw == NULL);
+    lua_pushnumber(slw->LState, num);
+}
+
+SLW_API void slwState_pushint(slwState* slw, int64_t num)
+{
+    slw_assert(slw == NULL);
+    lua_pushinteger(slw->LState, num);
+}
+
+SLW_API void slwState_pushbool(slwState* slw, bool b)
+{
+    slw_assert(slw == NULL);
+    lua_pushboolean(slw->LState, b);
+}
+
+SLW_API void slwState_pushcfunction(slwState* slw, lua_CFunction fn)
+{
+    slw_assert(slw == NULL);
+    lua_pushcfunction(slw->LState, fn);
+}
+
+SLW_API void slwState_pushlightudata(slwState* slw, void* data)
+{
+    slw_assert(slw == NULL);
+    lua_pushlightuserdata(slw->LState, data);
+}
+
+SLW_API void slwState_pushcclosure(slwState* slw, lua_CFunction fn, int n)
+{
+    slw_assert(slw == NULL);
+    lua_pushcclosure(slw->LState, fn, n);
+}
+
+SLW_API void slwState_pushnil(slwState* slw)
+{
+    slw_assert(slw == NULL);
+    lua_pushnil(slw->LState);
+}
+
+// Set Functions (Globals)
+//------------------------------------------------------------------------
+SLW_API void
+slwState_setstring(slwState* slw, const char* name, const char* str)
+{
+    slw_assert(slw == NULL);
+    lua_pushstring(slw->LState, str);
+
+    lua_setglobal(slw->LState, name);
+}
+
+SLW_API const char*
+slwset_setfstring(slwState* slw, const char* name, const char* fmt, ...)
+{
+    slw_assert(slw == NULL);
+
+    va_list args;
+    va_start(args, fmt);
+
+    const char* result = lua_pushvfstring(slw->LState, fmt, args);
+    va_end(args);
+
+    lua_setglobal(slw->LState, name);
+    return result;
+}
+
+SLW_API void
+slwState_setnumber(slwState* slw, const char* name, double num)
+{
+    slw_assert(slw == NULL);
+    lua_pushnumber(slw->LState, num);
+
+    lua_setglobal(slw->LState, name);
+}
+
+SLW_API void
+slwState_setint(slwState* slw, const char* name, int64_t num)
+{
+    slw_assert(slw == NULL);
+    lua_pushinteger(slw->LState, num);
+
+    lua_setglobal(slw->LState, name);
+}
+
+SLW_API void
+slwState_setbool(slwState* slw, const char* name, bool b)
+{
+    slw_assert(slw == NULL);
+    lua_pushboolean(slw->LState, b);
+
+    lua_setglobal(slw->LState, name);
+}
+
+SLW_API void
+slwState_setcfunction(slwState* slw, const char* name, lua_CFunction fn)
+{
+    slw_assert(slw == NULL);
+    lua_pushcfunction(slw->LState, fn);
+
+    lua_setglobal(slw->LState, name);
+}
+
+SLW_API void
+slwState_setlightudata(slwState* slw, const char* name, void* data)
+{
+    slw_assert(slw == NULL);
+    lua_pushlightuserdata(slw->LState, data);
+
+    lua_setglobal(slw->LState, name);
+}
+
+SLW_API void
+slwState_setcclosure(slwState* slw, const char* name, lua_CFunction fn, int n)
+{
+    slw_assert(slw == NULL);
+    lua_pushcclosure(slw->LState, fn, n);
+
+    lua_setglobal(slw->LState, name);
+}
+
+SLW_API void
+slwState_setnil(slwState* slw, const char* name)
+{
+    slw_assert(slw == NULL);
+    lua_pushnil(slw->LState);
+
+    lua_setglobal(slw->LState, name);
+}
+
+// Get Functions (Globals)
+//------------------------------------------------------------------------
+SLW_API slwReturnValue
+slwState_type_to_c(slwState* slw, const int type, const int idx)
+{
+    slw_assert(slw == NULL);
+    slwReturnValue ret;
+    ret.exists = true;
+
+    lua_State* L = slw->LState;
+
+    switch(type)
+    {
+        case LUA_TNONE:
+            ret.exists = false;
+            return ret;
+        case LUA_TBOOLEAN:
+            ret.b = lua_toboolean(L, idx);
+            break;
+        case LUA_TNUMBER:
+            ret.n = lua_tonumber(L, idx);
+            break;
+        case LUA_TSTRING:
+            ret.s = lua_tostring(L, idx);
+            break;
+        case LUA_TTABLE:
+            slw_assert(false); // todo
+            break;
+        case LUA_TFUNCTION:
+            ret.cfn = lua_tocfunction(L, idx);
+            break;
+        case LUA_TUSERDATA:
+            ret.cfn = lua_touserdata(L, idx);
+            break;
+        case LUA_TTHREAD:
+            ret.t = lua_tothread(L, idx);
+            break;
+        default:
+            break;
+    }
+
+    return ret;
+}
+
+SLW_API slwReturnValue
+slwState_getstring(slwState* slw, const char* name)
+{
+    slw_assert(slw == NULL);
+    lua_State* L = slw->LState;
+    lua_getglobal(L, name);
+    if (lua_isstring(L, -1))
+        return (slwReturnValue){.exists = true, .s = lua_tostring(L, -1)};
+
+    return (slwReturnValue){.exists = false, .b = false};
+}
+
+SLW_API slwReturnValue
+slwState_getnumber(slwState* slw, const char* name)
+{
+    slw_assert(slw == NULL);
+    lua_State* L = slw->LState;
+    lua_getglobal(L, name);
+    if (lua_isnumber(L, -1))
+        return (slwReturnValue){.exists = true, .n = lua_tonumber(L, -1)};
+
+    return (slwReturnValue){.exists = false, .b = false};
+}
+
+SLW_API slwReturnValue
+slwState_getint(slwState* slw, const char* name)
+{
+    slw_assert(slw == NULL);
+    lua_State* L = slw->LState;
+    lua_getglobal(L, name);
+    if (lua_isinteger(L, -1))
+        return (slwReturnValue){.exists = true, .i = lua_tointeger(L, -1)};
+
+    return (slwReturnValue){.exists = false, .b = false};
+}
+
+SLW_API slwReturnValue
+slwState_getbool(slwState* slw, const char* name)
+{
+    slw_assert(slw == NULL);
+    lua_State* L = slw->LState;
+    lua_getglobal(L, name);
+    if (lua_isboolean(L, -1))
+        return (slwReturnValue){.exists = true, .i = lua_toboolean(L, -1)};
+
+    return (slwReturnValue){.exists = false, .b = false};
+}
+
+SLW_API slwReturnValue
+slwState_getcfunction(slwState* slw, const char* name)
+{
+    slw_assert(slw == NULL);
+    lua_State* L = slw->LState;
+    lua_getglobal(L, name);
+    if (lua_iscfunction(L, -1))
+        return (slwReturnValue){.exists = true, .cfn = lua_tocfunction(L, -1)};
+
+    return (slwReturnValue){.exists = false, .b = false};
+}
+
+SLW_API slwReturnValue
+slwState_getfunction(slwState* slw, const char* name)
+{
+    slw_assert(slw == NULL);
+    lua_State* L = slw->LState;
+    lua_getglobal(L, name);
+    if (lua_iscfunction(L, -1))
+        return (slwReturnValue){.exists = true, .b = false};
+
+    return (slwReturnValue){.exists = false, .b = false};
+}
+
+SLW_API slwReturnValue
+slwState_getuserdata(slwState* slw, const char* name)
+{
+    slw_assert(slw == NULL);
+    lua_State* L = slw->LState;
+    lua_getglobal(L, name);
+    if (lua_isuserdata(L, -1))
+        return (slwReturnValue){.exists = true, .udata = lua_touserdata(L, -1)};
+
+    return (slwReturnValue){.exists = false, .b = false};
+}
+
+SLW_API slwReturnValue
+slwState_getnil(slwState* slw, const char* name)
+{
+    slw_assert(slw == NULL);
+    lua_State* L = slw->LState;
+    lua_getglobal(L, name);
+    if (lua_isnil(L, -1))
+        return (slwReturnValue){.exists = true, .b = true};
+
+    return (slwReturnValue){.exists = false, .b = false};
+}

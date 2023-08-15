@@ -1,0 +1,6 @@
+build/
+lua/include
+lua/lib
+
+cslw.10x
+debug.rdbg
