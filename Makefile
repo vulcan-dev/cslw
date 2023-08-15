@@ -1,6 +1,6 @@
 # Compiler and flags
-CC := gcc
-CFLAGS := -g -Wall -std=c11 -Iinclude -Ilua/include
+CC := clang
+CFLAGS := -g -Wall -fsanitize=address -fno-omit-frame-pointer -std=c11 -Iinclude -Ilua/include
 LDFLAGS := -Llua/lib -llua54
 
 # Directories
@@ -30,9 +30,9 @@ all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJS) | $(BIN_DIR)
 	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $@
-ifeq ($(OS),Windows_NT)
-	$(if $(CV2PDB),$(CV2PDB) $@ $@ $@.pdb)
-endif
+#ifeq ($(OS),Windows_NT)
+#	$(if $(CV2PDB),$(CV2PDB) $@ $@ $@.pdb)
+#endif
 
 $(BIN_DIR)/%.o: $(SRC_DIR)/%.c $(INC_DIR)/cslw/cslw.h | $(BIN_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
