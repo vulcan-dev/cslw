@@ -34,6 +34,11 @@
 
 #include <stdint.h>
 
+// Type Definitions
+//------------------------------------------------------------------------
+typedef struct slwTableValue_t slwTableValue_t;
+typedef struct slwTable slwTable;
+
 // Definitions
 //------------------------------------------------------------------------
 #ifndef SLW_IGNORE_BOOL
@@ -158,9 +163,10 @@ SLW_API const char* slwState_setfstring(slwState* slw, const char* name, const c
 SLW_API void slwState_setnumber(slwState* slw, const char* name, double num);
 SLW_API void slwState_setint(slwState* slw, const char* name, int64_t num);
 SLW_API void slwState_setbool(slwState* slw, const char* name, bool b);
-SLW_API void slwState_setcfunction(slwState* lwState, const char* name, lua_CFunction fn);
-SLW_API void slwState_setlightudata(slwState* lwState, const char* name, void* data);
-SLW_API void slwState_setcclosure(slwState* lwState, const char* name, lua_CFunction fn, int n);
+SLW_API void slwState_setcfunction(slwState* slw, const char* name, lua_CFunction fn);
+SLW_API void slwState_setlightudata(slwState* slw, const char* name, void* data);
+SLW_API void slwState_setcclosure(slwState* slw, const char* name, lua_CFunction fn, int n);
+SLW_API void slwState_settable(slwState* slw, const char* name, slwTable* slt);
 SLW_API void slwState_setnil(slwState* slw, const char* name);
 
 #if defined(SLW_GENERICS_SUPPORT)
@@ -173,6 +179,7 @@ SLW_API void slwState_setnil(slwState* slw, const char* name);
     double:                 slwState_setnumber,    \
     float:                  slwState_setnumber,    \
     bool:                   slwState_setbool,      \
+    slwTable*:              slwState_settable,     \
     void*:                  slwState_setlightudata \
 )(s, x, y)
 #endif
@@ -206,9 +213,6 @@ SLW_API slwReturnValue slwState_getuserdata(slwState* lwState, const char* name)
 SLW_API slwReturnValue slwState_getnil(slwState* slw, const char* name);
 
 // Table Stuff
-typedef struct slwTableValue_t slwTableValue_t;
-typedef struct slwTable slwTable;
-
 typedef union slwValue_u
 {
     const char* s;

@@ -51,7 +51,7 @@ int main(void)
         return 1;
     }
 
-    {
+    { // Test table
         slwTable* user = slwTable_create(slw,
             "name", slwt_tstring("dan"),
             NULL
@@ -64,8 +64,8 @@ int main(void)
             NULL
         );
 
-        slwTable_push(slw, tbl);
-        lua_setglobal(slw->LState, "MY_TABLE");
+        slwState_set(slw, "MY_TABLE", tbl);
+
         slw_free(tbl);
     }
 

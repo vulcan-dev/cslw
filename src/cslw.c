@@ -270,6 +270,16 @@ slwState_setcclosure(slwState* slw, const char* name, lua_CFunction fn, int n)
 }
 
 SLW_API void
+slwState_settable(slwState* slw, const char* name, slwTable* slt)
+{
+    slw_assert(slw != NULL);
+    slw_assert(slt != NULL);
+
+    slwTable_push(slw, slt);
+    lua_setglobal(slw->LState, name);
+}
+
+SLW_API void
 slwState_setnil(slwState* slw, const char* name)
 {
     slw_assert(slw != NULL);
