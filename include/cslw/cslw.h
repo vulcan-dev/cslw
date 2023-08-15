@@ -248,6 +248,8 @@ SLW_API void      slwTable_free(slwTable* slt);
 SLW_API void      slwTable_push(slwState* slw, slwTable* slt);
 SLW_API slwTable* slwTable_get(slwState* slw);
 
+SLW_API void      slwTable_dump(slwState* slw, slwTable* tbl, int depth);
+
 #if defined(SLW_LANGUAGE_CPP)
     SLW_EXTERN_C_END
 #endif

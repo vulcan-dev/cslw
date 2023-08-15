@@ -667,3 +667,53 @@ slwTable_get(slwState* slw)
 
     return tbl;
 }
+
+slw_internal void
+_slwTable_print_value(slwState* slw, slwTableValue_t value, int depth, int idx)
+{
+    if (idx != -1)
+        printf("%d: ", idx);
+
+    switch (value.ltype)
+    {
+        case LUA_TSTRING:
+            printf("%s\n", value.value.s);
+            break;
+        case LUA_TNUMBER:
+            printf("%f\n", value.value.d);
+            break;
+        case LUA_TBOOLEAN:
+            printf("%s\n", value.value.b ? "true" : "false");
+            break;
+        case LUA_TTABLE:
+            printf("table (depth: %d)\n", depth);
+            if (depth < SLW_RECURSION_DEPTH) {
+                slwTable_dump(slw, value.value.t, depth + 1);
+            } else {
+                printf("%*sMax recursion depth reached\n", (depth + 1) * 4, "");
+            }
+            break;
+        default:
+            printf("unknown type\n");
+            break;
+    }
+}
+
+SLW_API void slwTable_dump(slwState* slw, slwTable* tbl, int depth)
+{
+    slw_assert(slw != NULL);
+
+    for (size_t i = 0; i < tbl->size; i++)
+    {
+        slwTableValue_t el = tbl->elements[i];
+        if (el.name)
+        {
+            printf("%*s%s = ", depth * 4, "", el.name);
+            _slwTable_print_value(slw, el, depth, -1);
+        } else
+        {
+            printf("%*s", depth * 4, "");
+            _slwTable_print_value(slw, el, depth, i+1);
+        }
+    }
+}
