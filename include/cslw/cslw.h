@@ -72,19 +72,19 @@
 #endif
 
 // Libraries
-#define slw_lib_package 	1 << 0
-#define slw_lib_table 		1 << 1
-#define slw_lib_string  	1 << 2
-#define slw_lib_math		1 << 3
-#define slw_lib_debug		1 << 4
-#define slw_lib_io			1 << 5
-#define slw_lib_coroutine 	1 << 6
-#define slw_lib_os 			1 << 7
-#define slw_lib_utf8 		1 << 8
+#define slw_lib_package     1 << 0
+#define slw_lib_table       1 << 1
+#define slw_lib_string      1 << 2
+#define slw_lib_math        1 << 3
+#define slw_lib_debug       1 << 4
+#define slw_lib_io          1 << 5
+#define slw_lib_coroutine   1 << 6
+#define slw_lib_os          1 << 7
+#define slw_lib_utf8        1 << 8
 #if __slw_bit32_manual
-    #define slw_lib_bit32	1 << 9
+    #define slw_lib_bit32   1 << 9
 #else
-    #define slw_lib_bit32 0
+    #define slw_lib_bit32   0
 #endif
 
 #define slw_lib_all slw_lib_package   | slw_lib_table | slw_lib_string |               \
