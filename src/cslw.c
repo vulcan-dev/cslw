@@ -761,6 +761,7 @@ SLW_API slwTable* slwTable_get(slwState* slw)
     return slwTable_get_at(slw, -1);
 }
 
+// TODO: variadic arguments so I can easily do something like: `slwTable_get_from_key(slw, "SOME_GLOBAL2", "nested", "another_nested", "fn")`
 SLW_API slwTableValue_t*
 slwTable_get_from_key(slwTable* slt, const char* key)
 {
