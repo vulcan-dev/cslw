@@ -313,7 +313,7 @@ slwState_setnumber(slwState* slw, const char* name, double num)
 }
 
 SLW_API void
-slwState_setint(slwState* slw, const char* name, int64_t num)
+slwState_setint(slwState* slw, const char* name, uint64_t num)
 {
     slw_assert(slw != NULL);
     lua_pushinteger(slw->LState, num);
@@ -951,7 +951,7 @@ slwTable_setnumber(slwTable* slt, const char* name, double num)
 }
 
 SLW_API void
-slwTable_setint(slwTable* slt, const char* name, int64_t num)
+slwTable_setint(slwTable* slt, const char* name, uint64_t num)
 {
     slw_assert(slt != NULL);
     _slwTable_set_value(slt, name, slwt_tnumber(num)); // Todo: make integer

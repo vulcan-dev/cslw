@@ -49,6 +49,7 @@ int main(void)
         slwTable_setval(tbl2, "name", slwt_tstring("bob")); // Can call like `slwTable_setval(tbl2, "key1", "key2", "key3", "last_key", slwt_tstring("myValue"))`
         slwTable_setstring(tbl2, "name", "dan"); // overwrites bob or creates it hasn't been created already
         slwTable_set(tbl2, "lang", "c"); // `slwTable_set` is a _Generic (>= C11)
+        slwTable_setint(tbl2, "num", 42);
         slwTable_setcfunction(tbl2, "fn", l_my_function);
 
         slwTable* tbl = slwTable_create();
