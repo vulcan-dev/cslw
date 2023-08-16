@@ -1,6 +1,7 @@
 # Compiler and flags
 CC := clang
-CFLAGS := -g -Wall -fsanitize=address -fno-omit-frame-pointer -std=c11 -Iinclude -Ilua/include
+CFLAGS := -g -Wall -O0 -fsanitize=address -fno-omit-frame-pointer -std=c11 -Iinclude -Ilua/include
+#CFLAGS := -g -Wall -O3 -std=c11 -Iinclude -Ilua/include
 LDFLAGS := -Llua/lib -llua54
 
 # Directories

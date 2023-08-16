@@ -16,12 +16,8 @@
     #endif
 #endif
 
-#define SLW_EXTERN_C_BEGIN extern "C" {
-#define SLW_EXTERN_C_END }
-
 #if defined(SLW_LANGUAGE_CPP)
     #define SLW_IGNORE_BOOL
-    SLW_EXTERN_C_BEGIN
 #endif
 
 #define SLW_RECURSION_DEPTH 32
@@ -58,6 +54,14 @@ typedef struct slwTable slwTable;
     #endif
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+    #define slw_force_inline inline __attribute__((always_inline))
+#elif defined(_MSC_VER)
+    #define slw_force_inline __forceinline
+#else
+    #define slw_force_inline inline
+#endif
+
 #if defined(SLW_ENABLE_ASSERTIONS)
     #include <assert.h>
     #define slw_assert(c) assert(c)
@@ -67,13 +71,14 @@ typedef struct slwTable slwTable;
 
 #define slw_internal static
 #define slw_malloc(sz) malloc(sz)
+#define slw_calloc(c, sz) calloc(c, sz)
 #define slw_realloc(b, sz) realloc(b, sz)
 #define slw_free(b) free(b)
 
 #if LUA_VERSION_NUM >= 504 && defined(LUA_COMPAT_BITLIB)
-#define __cslw_bit32_manual 1
+    #define __cslw_bit32_manual 1
 #else
-#define __cslw_bit32_manual 0
+    #define __cslw_bit32_manual 0
 #endif
 
 // Libraries
@@ -167,6 +172,7 @@ SLW_API void slwState_setcfunction(slwState* slw, const char* name, lua_CFunctio
 SLW_API void slwState_setlightudata(slwState* slw, const char* name, void* data);
 SLW_API void slwState_setcclosure(slwState* slw, const char* name, lua_CFunction fn, int n);
 SLW_API void slwState_settable(slwState* slw, const char* name, slwTable* slt);
+SLW_API void slwState_settable2(slwState* slw, ...);
 SLW_API void slwState_setnil(slwState* slw, const char* name);
 
 #if defined(SLW_GENERICS_SUPPORT)
@@ -220,6 +226,8 @@ typedef union slwValue_u
     int i;
     bool b;
     slwTable* t;
+    void* u;
+    lua_CFunction f;
 } slwValue_u;
 
 struct slwTableValue_t
@@ -235,23 +243,53 @@ struct slwTable
     size_t size;
 };
 
-#define  slwt_tstring(x) ((slwTableValue_t) {.ltype = LUA_TSTRING, .value.s = x})
-#define  slwt_tnumber(x) ((slwTableValue_t) {.ltype = LUA_TNUMBER, .value.d = x})
-#define slwt_tinteger(x) ((slwTableValue_t) {.ltype = LUA_TNUMBER, .value.i = x})
-#define slwt_tboolean(x) ((slwTableValue_t) {.ltype = LUA_TBOOLEAN, .value.b = x})
-#define   slwt_ttable(x) ((slwTableValue_t) {.ltype = LUA_TTABLE, .value.t = x})
+#define slwt_tlightuserdata(x) ((slwTableValue_t) {.ltype = LUA_TLIGHTUSERDATA,   .value.u = x})
+#define slwt_tcfunction(x)     ((slwTableValue_t) {.ltype = LUA_TFUNCTION,   .value.f = x})
+#define slwt_tinteger(x)       ((slwTableValue_t) {.ltype = LUA_TNUMBER,  .value.i = x})
+#define slwt_tboolean(x)       ((slwTableValue_t) {.ltype = LUA_TBOOLEAN, .value.b = x})
+#define slwt_tstring(x)        ((slwTableValue_t) {.ltype = LUA_TSTRING,  .value.s = x})
+#define slwt_tnumber(x)        ((slwTableValue_t) {.ltype = LUA_TNUMBER,  .value.d = x})
+#define slwt_ttable(x)         ((slwTableValue_t) {.ltype = LUA_TTABLE,   .value.t = x})
+#define slwt_tnil              ((slwTableValue_t) {.ltype = LUA_TNIL})
 
-SLW_API slwTable* slwTable_createkv(slwState* slw, ...);
-SLW_API slwTable* slwTable_createi(slwState* slw, ...);
-SLW_API void      slwTable_free(slwTable* slt);
+SLW_API slwTable*        slwTable_create();
+SLW_API slwTable*        slwTable_createkv(slwState* slw, ...);
+SLW_API slwTable*        slwTable_createi(slwState* slw, ...);
+SLW_API void             slwTable_free(slwTable* slt);
 
-SLW_API void      slwTable_push(slwState* slw, slwTable* slt);
-SLW_API slwTable* slwTable_get(slwState* slw);
+SLW_API void             slwTable_push(slwState* slw, slwTable* slt);
+SLW_API slwTableValue_t* slwTable_get_from_key(slwTable* slt, const char* key);
+SLW_API slwTable*        slwTable_get_at(slwState* slw, const int32_t idx);
+SLW_API slw_force_inline slwTable* slwTable_get(slwState* slw);
 
-SLW_API void      slwTable_dump(slwState* slw, slwTable* tbl, int depth);
+SLW_API void             slwTable_setval(slwTable* slt, ...);
 
-#if defined(SLW_LANGUAGE_CPP)
-    SLW_EXTERN_C_END
+SLW_API void             slwTable_setstring(slwTable* slt, const char* name, const char* str);
+SLW_API void             slwTable_setfstring(slwTable* slt, const char* name, const char* fmt, ...);
+SLW_API void             slwTable_setnumber(slwTable* slt, const char* name, double num);
+SLW_API void             slwTable_setint(slwTable* slt, const char* name, int64_t num);
+SLW_API void             slwTable_setbool(slwTable* slt, const char* name, bool b);
+SLW_API void             slwTable_setcfunction(slwTable* slt, const char* name, lua_CFunction fn);
+SLW_API void             slwTable_setlightudata(slwTable* slt, const char* name, void* data);
+SLW_API void             slwTable_settable(slwTable* slt, const char* name, slwTable* tbl);
+SLW_API void             slwTable_setnil(slwTable* slt, const char* name);
+
+#if defined(SLW_GENERICS_SUPPORT)
+#define slwTable_set(s, x, y) _Generic((y),        \
+    lua_CFunction:          slwTable_setcfunction, \
+    char*:                  slwTable_setstring,    \
+    int:                    slwTable_setint,       \
+    uint16_t:               slwTable_setint,       \
+    uint64_t:               slwTable_setint,       \
+    double:                 slwTable_setnumber,    \
+    float:                  slwTable_setnumber,    \
+    bool:                   slwTable_setbool,      \
+    slwTable*:              slwTable_settable,     \
+    void*:                  slwTable_setlightudata \
+    )(s, x, y)
 #endif
+
+SLW_API void             slwTable_dump(slwState* slw, slwTable* slt, int depth);
+SLW_API void             slwTable_dumpg(slwState* slw, const char* name);
 
 #endif
