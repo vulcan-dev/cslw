@@ -244,7 +244,7 @@ struct slwTable
 };
 
 #define slwt_tlightuserdata(x) ((slwTableValue_t) {.ltype = LUA_TLIGHTUSERDATA,   .value.u = x})
-#define slwt_tcfunction(x)     ((slwTableValue_t) {.ltype = LUA_TFUNCTION,   .value.f = x})
+#define slwt_tfunction(x)     ((slwTableValue_t) {.ltype = LUA_TFUNCTION,   .value.f = x})
 #define slwt_tinteger(x)       ((slwTableValue_t) {.ltype = LUA_TNUMBER,  .value.i = x})
 #define slwt_tboolean(x)       ((slwTableValue_t) {.ltype = LUA_TBOOLEAN, .value.b = x})
 #define slwt_tstring(x)        ((slwTableValue_t) {.ltype = LUA_TSTRING,  .value.s = x})

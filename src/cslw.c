@@ -670,18 +670,33 @@ slwTable_get_at(slwState* slw, const int32_t idx) // TODO: rename to `get_at` an
         while (lua_next(L, idx - 1) != 0) {
             if (lua_isstring(L, idx - 1)) {
                 value.name = lua_tostring(L, idx - 1);
-                if (lua_isstring(L, idx)) {
-                    value.ltype = LUA_TSTRING;
-                    value.value.s = lua_tostring(L, idx);
-                } else if (lua_isnumber(L, idx)) {
-                    value.ltype = LUA_TNUMBER;
-                    value.value.d = lua_tonumber(L, idx);
-                } else if (lua_isboolean(L, idx)) {
-                    value.ltype = LUA_TBOOLEAN;
-                    value.value.b = lua_toboolean(L, idx);
-                } else if (lua_istable(L, idx)) {
-                    value.ltype = LUA_TTABLE;
-                    value.value.t = slwTable_get(slw);
+                const int type = lua_type(L, idx);
+                switch (type)
+                {
+                    case LUA_TSTRING:
+                        value.ltype = LUA_TSTRING;
+                        value.value.s = lua_tostring(L, idx);
+                        break;
+                    case LUA_TNUMBER:
+                        value.ltype = LUA_TNUMBER;
+                        value.value.d = lua_tonumber(L, idx);
+                        break;
+                    case LUA_TBOOLEAN:
+                        value.ltype = LUA_TBOOLEAN;
+                        value.value.b = lua_toboolean(L, idx);
+                        break;
+                    case LUA_TTABLE:
+                        value.ltype = LUA_TTABLE;
+                        value.value.t = slwTable_get(slw);
+                        break;
+                    case LUA_TLIGHTUSERDATA:
+                        value.ltype = LUA_TLIGHTUSERDATA;
+                        value.value.u = lua_touserdata(L, idx); // ?
+                        break;
+                    case LUA_TFUNCTION:
+                        value.ltype = LUA_TFUNCTION;
+                        value.value.f = lua_tocfunction(L, idx);
+                        break;
                 }
 
                 tbl->elements = (slwTableValue_t*)slw_realloc(tbl->elements, sizeof(slwTableValue_t) * (tableLen + 1));
@@ -700,26 +715,34 @@ slwTable_get_at(slwState* slw, const int32_t idx) // TODO: rename to `get_at` an
             value.name = NULL;
 
             lua_pushinteger(L, i);
-            lua_gettable(L, -2);
+            lua_gettable(L, idx - 1);
 
-            const int type = lua_type(L, -1);
+            const int type = lua_type(L, idx); // I know, duplication. To be fixed...
             switch (type)
             {
                 case LUA_TSTRING:
                     value.ltype = LUA_TSTRING;
-                    value.value.s = lua_tostring(L, -1);
+                    value.value.s = lua_tostring(L, idx);
                     break;
                 case LUA_TNUMBER:
                     value.ltype = LUA_TNUMBER;
-                    value.value.d = lua_tonumber(L, -1);
+                    value.value.d = lua_tonumber(L, idx);
                     break;
                 case LUA_TBOOLEAN:
                     value.ltype = LUA_TBOOLEAN;
-                    value.value.b = lua_toboolean(L, -1);
+                    value.value.b = lua_toboolean(L, idx);
                     break;
                 case LUA_TTABLE:
                     value.ltype = LUA_TTABLE;
                     value.value.t = slwTable_get(slw);
+                    break;
+                case LUA_TLIGHTUSERDATA:
+                    value.ltype = LUA_TLIGHTUSERDATA;
+                    value.value.u = lua_touserdata(L, idx); // ?
+                    break;
+                case LUA_TFUNCTION:
+                    value.ltype = LUA_TFUNCTION;
+                    value.value.f = lua_tocfunction(L, idx);
                     break;
             }
 
@@ -968,7 +991,7 @@ SLW_API void
 slwTable_setcfunction(slwTable* slt, const char* name, lua_CFunction fn)
 {
     slw_assert(slt != NULL);
-    _slwTable_set_value(slt, name, slwt_tcfunction(fn));
+    _slwTable_set_value(slt, name, slwt_tfunction(fn));
 }
 
 SLW_API void

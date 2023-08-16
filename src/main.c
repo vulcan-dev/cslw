@@ -77,6 +77,8 @@ int main(void)
     slwState_settable2(slw, "SOME_GLOBAL2", "nested", "str", slwt_tstring("Ello mate!"));
     slwState_settable2(slw, "SOME_GLOBAL2", "nested", "num", slwt_tnumber(420));
     slwState_settable2(slw, "SOME_GLOBAL2", "nested", "another_nested", "name", slwt_tstring("Bob"));
+    slwState_settable2(slw, "SOME_GLOBAL2", "nested", "another_nested", "fn", slwt_tfunction(l_my_function));
+
     slwState_runstring(slw, lua_code);
 
     slwTable_dumpg(slw, "INDEX_TABLE");
