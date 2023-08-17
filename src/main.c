@@ -10,8 +10,7 @@
 
 int l_my_function(lua_State* L)
 {
-    slwState* slw = slwState_new(L);
-    slwState_set(slw, "A", 42);
+    printf("l_my_function called!\n");
     return 0;
 }
 
@@ -77,9 +76,14 @@ int main(void)
     slwState_settable2(slw, "SOME_GLOBAL2", "nested", "str", slwt_tstring("Ello mate!"));
     slwState_settable2(slw, "SOME_GLOBAL2", "nested", "num", slwt_tnumber(420));
     slwState_settable2(slw, "SOME_GLOBAL2", "nested", "another_nested", "name", slwt_tstring("Bob"));
-    slwState_settable2(slw, "SOME_GLOBAL2", "nested", "another_nested", "fn", slwt_tfunction(l_my_function));
 
-    slwState_runstring(slw, lua_code);
+    slwState_settable2(slw, "FUNC_TABLE", "fn", slwt_tfunction(l_my_function));
+
+    if (slwState_runfile(slw, "../lua/scripts/main.lua") != 0)
+    {
+        printf("failed running script file: %s\n", lua_tostring(slw->LState, -1));
+        goto cleanup;
+    }
 
     slwTable_dumpg(slw, "INDEX_TABLE");
     slwTable_dumpg(slw, "USER_TABLE");
@@ -88,6 +92,7 @@ int main(void)
     slwTable_dumpg(slw, "SOME_GLOBAL2");
     
     // Cleanup
+    cleanup:
     slwState_destroy(slw);
     return 0;
 }

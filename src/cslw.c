@@ -1042,14 +1042,17 @@ slwTable_dumpg(slwState* slw, const char* name)
 {
     slw_assert(slw != NULL);
 
-    printf("==== Dumping Table: %s ====\n", name);
-
     lua_getglobal(slw->LState, name);
     slwTable* slt = slwTable_get(slw);
-    if (slt)
-        slwTable_dump(slw, slt, 0);
-    else
-        printf("Could not find table\n");
+    if (!slt)
+    {
+        printf("Could not dump table: %s: table does not exist\n", name);
+        return;
+    }
+
+    printf("==== Dumping Table: %s ====\n", name);
+
+    slwTable_dump(slw, slt, 0);
     slwTable_free(slt);
 
     printf("==== Dumping End ====\n\n");
