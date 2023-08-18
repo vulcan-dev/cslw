@@ -1,13 +1,13 @@
 #ifndef CSLW_H
 #define CSLW_H
 
+#define SLW_C11_VERSION 201112L
+
 #if __cplusplus > 0
     #define SLW_LANGUAGE_CPP
 #else
     #if defined(__STDC_VERSION__)
-        #if __STDC_VERSION__ >= 201710L
-            #define SLW_LANGUAGE_C18
-        #elif __STDC_VERSION__ >= 201112L
+        #if __STDC_VERSION__ >= SLW_C11_VERSION
             #define SLW_LANGUAGE_C11
             #define SLW_GENERICS_SUPPORT
         #elif __STDC_VERSION__ >= 199901L
