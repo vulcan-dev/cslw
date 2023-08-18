@@ -4,16 +4,76 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <memory.h>
 
 // So I don't forget:
 // Don't add a function to remove something from a table, just set it to nil.
 
 int l_my_function(lua_State* L)
 {
-    printf("l_my_function called!\n");
+    slwState* slw = slwState_new(L);
+    printf("l_my_function called\n");
+
+    slwTable* tbl = slwTable_get_at(slw, -1);
+    if (!tbl)
+    {
+        printf("Did not get table for l_my_function!\n");
+    } else
+    {
+        slwTable_dump(slw, tbl, "arg1 l_my_function", 0);
+        slwTable_free(tbl);
+    }
+
     return 0;
 }
 
+#if 1
+int main(void)
+{
+    // Create State
+    slwState* slw = slwState_new(slw_lib_all);
+    if (!slw)
+    {
+        fprintf(stderr, "Failed to create state\n");
+        slwState_destroy(slw);
+        return 1;
+    }
+    
+    // Setup Table
+    {
+        slwTable slwT;
+        memset(&slwT, 0, sizeof(slwTable));
+
+        slwTable_set(&slwT, "myFunction", l_my_function);
+        slwState_settable(slw, "slwt", &slwT);
+    }
+
+    // Run Lua File
+    slwState_runfile(slw, "../lua/scripts/main.lua");
+
+    // Call Function
+    lua_getglobal(slw->LState, "callMe");
+    if (!slwState_call_fn_at(slw, -1,
+            slwt_tstring("Hello"),
+            slwt_tstring("world"),
+            slwt_tnumber(420),
+            NULL))
+    {
+        printf("Failed calling: callMe: %s\n", lua_tostring(slw->LState, -1));
+    } else
+    {
+        slwTable* t = slwTable_get_at(slw, -1);
+        if (t)
+        {
+            slwTable_dump(slw, t, "return callMe", 0);
+            slwTable_free(t);
+        }
+    }
+
+    // Cleanup
+    slwState_destroy(slw);
+}
+#else
 int main(void)
 {
     slwState* slw = slwState_new(slw_lib_all);
@@ -26,16 +86,16 @@ int main(void)
 
     { // Test table
         slwTable* user = slwTable_createkv(slw,
-            "name", slwt_tstring("dan"),
-            NULL
-        );
+                                           "name", slwt_tstring("dan"),
+                                           NULL
+                                           );
 
         slwTable* tbl = slwTable_createkv(slw,
-            "C_GLOBAL_STRING", slwt_tstring("Hello"),
-            "C_GLOBAL_NUMBER", slwt_tnumber(4.20),
-            "user1",           slwt_ttable(user),
-            NULL
-        );
+                                          "C_GLOBAL_STRING", slwt_tstring("Hello"),
+                                          "C_GLOBAL_NUMBER", slwt_tnumber(4.20),
+                                          "user1",           slwt_ttable(user),
+                                          NULL
+                                          );
 
         slwState_set(slw, "MY_TABLE", tbl);
 
@@ -62,10 +122,10 @@ int main(void)
 
     { // Text indexed table
         slwTable* tbl = slwTable_createi(slw,
-            slwt_tstring("string1"),
-            slwt_tnumber(4.20),
-            NULL
-        );
+                                         slwt_tstring("string1"),
+                                         slwt_tnumber(4.20),
+                                         NULL
+                                         );
 
         slwState_set(slw, "MY_INDEXED_TABLE", tbl);
         slwTable_free(tbl);
@@ -93,6 +153,7 @@ int main(void)
     
     // Cleanup
     cleanup:
-    slwState_destroy(slw);
+        slwState_destroy(slw);
     return 0;
 }
+#endif

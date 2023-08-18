@@ -55,11 +55,11 @@ typedef struct slwTable slwTable;
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
-    #define slw_force_inline inline __attribute__((always_inline))
+    #define SLW_INLINE inline __attribute__((always_inline))
 #elif defined(_MSC_VER)
-    #define slw_force_inline __forceinline
+    #define SLW_INLINE __forceinline
 #else
-    #define slw_force_inline inline
+    #define SLW_INLINE inline
 #endif
 
 #if defined(SLW_ENABLE_ASSERTIONS)
@@ -110,6 +110,8 @@ typedef struct slwState
 
 // Functions
 //------------------------------------------------------------------------
+// TODO: Maybe all stack functions should be: `slwStack_xxx`
+
 SLW_API void slwState_destroy(slwState* slw);
 SLW_API void slwState_close(slwState* slw);
 
@@ -118,6 +120,9 @@ SLW_API void slwState_openlib(slwState* slw, const char* name, lua_CFunction fun
 
 SLW_API int slwState_runstring(slwState* slw, const char* str);
 SLW_API int slwState_runfile(slwState* slw, const char* filename);
+
+SLW_API bool slwState_call_fn_at(slwState* slw, size_t idx, ...);
+SLW_API bool slwState_call_fn(slwState* slw, const char* name, ...);
 
 // New Functions
 SLW_API slwState* slwState_new_empty();
@@ -244,8 +249,7 @@ struct slwTable
 };
 
 #define slwt_tlightuserdata(x) ((slwTableValue_t) {.ltype = LUA_TLIGHTUSERDATA,   .value.u = x})
-#define slwt_tfunction(x)     ((slwTableValue_t) {.ltype = LUA_TFUNCTION,   .value.f = x})
-#define slwt_tinteger(x)       ((slwTableValue_t) {.ltype = LUA_TNUMBER,  .value.i = x})
+#define slwt_tfunction(x)      ((slwTableValue_t) {.ltype = LUA_TFUNCTION,   .value.f = x})
 #define slwt_tboolean(x)       ((slwTableValue_t) {.ltype = LUA_TBOOLEAN, .value.b = x})
 #define slwt_tstring(x)        ((slwTableValue_t) {.ltype = LUA_TSTRING,  .value.s = x})
 #define slwt_tnumber(x)        ((slwTableValue_t) {.ltype = LUA_TNUMBER,  .value.d = x})
@@ -260,7 +264,7 @@ SLW_API void             slwTable_free(slwTable* slt);
 SLW_API void             slwTable_push(slwState* slw, slwTable* slt);
 SLW_API slwTableValue_t* slwTable_get_from_key(slwTable* slt, const char* key);
 SLW_API slwTable*        slwTable_get_at(slwState* slw, const int32_t idx);
-SLW_API slw_force_inline slwTable* slwTable_get(slwState* slw);
+SLW_API SLW_INLINE slwTable* slwTable_get(slwState* slw);
 
 SLW_API void             slwTable_setval(slwTable* slt, ...);
 
@@ -289,7 +293,10 @@ SLW_API void             slwTable_setnil(slwTable* slt, const char* name);
     )(s, x, y)
 #endif
 
-SLW_API void             slwTable_dump(slwState* slw, slwTable* slt, int depth);
+// Can pass NULL to `slwTable_dump` if you don't want the header and footer prints.
+SLW_API void             slwTable_dump(slwState* slw, slwTable* slt, const char* name, int depth);
+
+// Dumps a table from a Lua global.
 SLW_API void             slwTable_dumpg(slwState* slw, const char* name);
 
 #endif

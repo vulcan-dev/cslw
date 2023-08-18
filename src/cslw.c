@@ -9,6 +9,11 @@
 
 // Internal Functions (Mainly helper functions)
 //------------------------------------------------------------------------
+SLW_INLINE slw_internal bool _is_integer(const double d)
+{
+    return (int)d == d;
+}
+
 slw_internal void
 _slwTable_push_value(slwState* slw, slwTableValue_t el)
 {
@@ -69,7 +74,10 @@ _slwTable_print_value(slwState* slw, slwTableValue_t value, int depth, int idx)
             printf("%s\n", value.value.s);
             break;
         case LUA_TNUMBER:
-            printf("%f\n", value.value.d);
+            if (_is_integer(value.value.d))
+                printf("%d\n", (int)value.value.d);
+            else
+                printf("%f\n", value.value.d);
             break;
         case LUA_TBOOLEAN:
             printf("%s\n", value.value.b ? "true" : "false");
@@ -77,7 +85,7 @@ _slwTable_print_value(slwState* slw, slwTableValue_t value, int depth, int idx)
         case LUA_TTABLE:
             printf("table (depth: %d)\n", depth);
             if (depth < SLW_RECURSION_DEPTH) {
-                slwTable_dump(slw, value.value.t, depth + 1);
+                slwTable_dump(slw, value.value.t, NULL, depth + 1);
             } else {
                 printf("%*sMax recursion depth reached\n", (depth + 1) * 4, "");
             }
@@ -147,7 +155,7 @@ slwState_new_from_slws(slwState* slw)
 
 SLW_API slwState* slwState_new_from_luas(lua_State* L)
 {
-    slw_assert(L == NULL);
+    slw_assert(L != NULL);
 
     slwState* slw = (slwState*)slw_malloc(sizeof(slwState));
     if (!slw)
@@ -203,29 +211,78 @@ slwState_openlib(slwState* slw, const char* name, lua_CFunction func)
     lua_pop(slw->LState, 1);
 }
 
-SLW_API int slwState_runstring(slwState* slw, const char* str)
+SLW_API int
+slwState_runstring(slwState* slw, const char* str)
 {
     slw_assert(slw != NULL);
     lua_State* L = slw->LState;
     return luaL_loadstring(L, str) || lua_pcall(L, 0, LUA_MULTRET, 0);
 }
 
-SLW_API int slwState_runfile(slwState* slw, const char* filename)
+SLW_API int
+slwState_runfile(slwState* slw, const char* filename)
 {
     slw_assert(slw != NULL);
     lua_State* L = slw->LState;
     return luaL_loadfile(L, filename) || lua_pcall(L, 0, LUA_MULTRET, 0);
 }
 
+SLW_API bool slwState_call_fn_at(slwState* slw, size_t idx, ...)
+{
+    slw_assert(slw != NULL);
+    lua_State* L = slw->LState;
+
+    if (!lua_isfunction(L, idx))
+        return false;
+
+    int nargs = 0;
+    
+    va_list args;
+    va_start(args, idx);
+
+    slwTableValue_t* arg = NULL;
+    while ((arg = va_arg(args, slwTableValue_t*)) != NULL)
+    {
+        _slwTable_push_value(slw, *arg);
+        ++nargs;
+    }
+    va_end(args);
+
+    if (lua_pcall(L, nargs, LUA_MULTRET, 0) != 0)
+        return false;
+
+    return true;
+}
+
+SLW_API bool
+slwState_call_fn(slwState* slw, const char* name, ...)
+{
+    slw_assert(slw != NULL);
+
+    lua_getglobal(slw->LState, name);
+
+    va_list args;
+    va_start(args, name);
+
+    bool result = slwState_call_fn_at(slw, -1, args);
+
+    va_end(args);
+
+    return result;
+}
+
+
 // Push Functions
 //------------------------------------------------------------------------
-SLW_API void slwState_pushstring(slwState* slw, const char* str)
+SLW_API void
+slwState_pushstring(slwState* slw, const char* str)
 {
     slw_assert(slw != NULL);
     lua_pushstring(slw->LState, str);
 }
 
-SLW_API const char* slwState_pushfstring(slwState* slw, const char* fmt, ...)
+SLW_API const char*
+slwState_pushfstring(slwState* slw, const char* fmt, ...)
 {
     slw_assert(slw != NULL);
 
@@ -237,43 +294,50 @@ SLW_API const char* slwState_pushfstring(slwState* slw, const char* fmt, ...)
     return result;
 }
 
-SLW_API void slwState_pushnumber(slwState* slw, double num)
+SLW_API void
+slwState_pushnumber(slwState* slw, double num)
 {
     slw_assert(slw != NULL);
     lua_pushnumber(slw->LState, num);
 }
 
-SLW_API void slwState_pushint(slwState* slw, int64_t num)
+SLW_API void
+slwState_pushint(slwState* slw, int64_t num)
 {
     slw_assert(slw != NULL);
     lua_pushinteger(slw->LState, num);
 }
 
-SLW_API void slwState_pushbool(slwState* slw, bool b)
+SLW_API void
+slwState_pushbool(slwState* slw, bool b)
 {
     slw_assert(slw != NULL);
     lua_pushboolean(slw->LState, b);
 }
 
-SLW_API void slwState_pushcfunction(slwState* slw, lua_CFunction fn)
+SLW_API void
+slwState_pushcfunction(slwState* slw, lua_CFunction fn)
 {
     slw_assert(slw != NULL);
     lua_pushcfunction(slw->LState, fn);
 }
 
-SLW_API void slwState_pushlightudata(slwState* slw, void* data)
+SLW_API void
+slwState_pushlightudata(slwState* slw, void* data)
 {
     slw_assert(slw != NULL);
     lua_pushlightuserdata(slw->LState, data);
 }
 
-SLW_API void slwState_pushcclosure(slwState* slw, lua_CFunction fn, int n)
+SLW_API void
+slwState_pushcclosure(slwState* slw, lua_CFunction fn, int n)
 {
     slw_assert(slw != NULL);
     lua_pushcclosure(slw->LState, fn, n);
 }
 
-SLW_API void slwState_pushnil(slwState* slw)
+SLW_API void
+slwState_pushnil(slwState* slw)
 {
     slw_assert(slw != NULL);
     lua_pushnil(slw->LState);
@@ -1017,10 +1081,13 @@ slwTable_setnil(slwTable* slt, const char* name)
 }
 
 SLW_API void
-slwTable_dump(slwState* slw, slwTable* slt, int depth)
+slwTable_dump(slwState* slw, slwTable* slt, const char* name, int depth)
 {
     slw_assert(slw != NULL);
     slw_assert(slt != NULL);
+
+    if (name)
+        printf("==== Dumping Table: %s ====\n", name);
 
     for (size_t i = 0; i < slt->size; i++)
     {
@@ -1035,6 +1102,9 @@ slwTable_dump(slwState* slw, slwTable* slt, int depth)
             _slwTable_print_value(slw, el, depth, i+1);
         }
     }
+
+    if (name)
+        printf("==== Dumping End ====\n\n");
 }
 
 SLW_API void
@@ -1050,10 +1120,6 @@ slwTable_dumpg(slwState* slw, const char* name)
         return;
     }
 
-    printf("==== Dumping Table: %s ====\n", name);
-
-    slwTable_dump(slw, slt, 0);
+    slwTable_dump(slw, slt, name, 0);
     slwTable_free(slt);
-
-    printf("==== Dumping End ====\n\n");
 }
