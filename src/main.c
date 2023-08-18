@@ -1,5 +1,5 @@
 #define SLW_ENABLE_ASSERTIONS
-#include <cslw/cslw.h>
+#include "cslw/cslw.h"
 #include "lua_code.h"
 
 #include <stdio.h>
@@ -11,7 +11,11 @@
 
 int l_my_function(lua_State* L)
 {
+#if defined(SLW_GENERICS_SUPPORT)
     slwState* slw = slwState_new(L);
+#else
+    slwState* slw = slwState_new_from_luas(L);
+#endif
     printf("l_my_function called\n");
 
     slwTable* tbl = slwTable_get_at(slw, -1);
@@ -24,14 +28,19 @@ int l_my_function(lua_State* L)
         slwTable_free(tbl);
     }
 
-    return 0;
+    slwState_pushstring(slw, "Return from l_my_function");
+    return 1;
 }
 
 #if 1
 int main(void)
 {
     // Create State
+#if defined(SLW_GENERICS_SUPPORT)
     slwState* slw = slwState_new(slw_lib_all);
+#else
+    slwState* slw = slwState_new_with(slw_lib_all);
+#endif
     if (!slw)
     {
         fprintf(stderr, "Failed to create state\n");
@@ -44,7 +53,11 @@ int main(void)
         slwTable slwT;
         memset(&slwT, 0, sizeof(slwTable));
 
+#if defined(SLW_GENERICS_SUPPORT)
         slwTable_set(&slwT, "myFunction", l_my_function);
+#else
+        slwTable_setcfunction(&slwT, "myFunction", l_my_function);
+#endif
         slwState_settable(slw, "slwt", &slwT);
     }
 

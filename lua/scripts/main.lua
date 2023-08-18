@@ -1,6 +1,6 @@
-slwt.myFunction({
+print(slwt.myFunction({
     text = "Hello World"
-})
+}))
 
 function callMe(...)
     local arg = {...}
