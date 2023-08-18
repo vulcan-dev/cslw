@@ -1,4 +1,3 @@
-#define SLW_ENABLE_ASSERTIONS
 #define SLW_TABLE_MAX_KEYS 32
 
 #include "cslw/cslw.h"
@@ -963,6 +962,11 @@ SLW_API void slwState_settable2(slwState* slw, ...)
 
     lua_State* L = slw->LState;
 
+    if (keys[0] == NULL)
+    {
+        slw_assert(false);
+        return; // to make gcc happy
+    }
     lua_getglobal(L, keys[0]);
 
     if (lua_isnil(L, -1)) {

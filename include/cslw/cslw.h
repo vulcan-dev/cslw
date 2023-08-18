@@ -11,24 +11,26 @@
             #define SLW_LANGUAGE_C11
             #define SLW_GENERICS_SUPPORT
         #elif __STDC_VERSION__ >= 199901L
-            #define SLW_LANGUAGE_C99
+            #define SLW_LANGUAGE_C99 // Not really used, I can probably remove this.
         #endif
     #endif
 #endif
 
-#if defined(SLW_LANGUAGE_CPP)
-    #define SLW_IGNORE_BOOL
+#if !defined(SLW_RECURSION_DEPTH)
+    #define SLW_RECURSION_DEPTH 32
 #endif
 
-#define SLW_RECURSION_DEPTH 32
+#if !defined(SLW_ENABLE_ASSERTIONS)
+    #if defined(NDEBUG) && !defined(_DEBUG)
+        #define SLW_ENABLE_ASSERTIONS 0
+    #else
+        #define SLW_ENABLE_ASSERTIONS 1
+    #endif
+#endif
 
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
-
-#if !defined(LUA_GLOBALSINDEX)
-    #define LUA_GLOBALSINDEX (-10002)
-#endif
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -62,7 +64,7 @@ typedef struct slwTable slwTable;
     #define SLW_INLINE inline
 #endif
 
-#if defined(SLW_ENABLE_ASSERTIONS)
+#if SLW_ENABLE_ASSERTIONS == 1
     #include <assert.h>
     #define slw_assert(c) assert(c)
 #else
@@ -70,10 +72,22 @@ typedef struct slwTable slwTable;
 #endif
 
 #define slw_internal static
+
+#if !defined(slw_malloc)
 #define slw_malloc(sz) malloc(sz)
+#endif
+
+#if !defined(slw_calloc)
 #define slw_calloc(c, sz) calloc(c, sz)
+#endif
+
+#if !defined(slw_realloc)
 #define slw_realloc(b, sz) realloc(b, sz)
+#endif
+
+#if !defined(slw_free)
 #define slw_free(b) free(b)
+#endif
 
 #if LUA_VERSION_NUM >= 504 && defined(LUA_COMPAT_BITLIB)
     #define __cslw_bit32_manual 1
@@ -166,6 +180,7 @@ SLW_API void slwState_pushnil(slwState* slw);
         void*:                  slwState_pushlightudata \
     )(s, x)
 #endif
+// TODO: Add slwTable* to ^
 
 // Set Functions (Globals)
 SLW_API void slwState_setstring(slwState* slw, const char* name, const char* str);
@@ -264,7 +279,7 @@ SLW_API void             slwTable_free(slwTable* slt);
 SLW_API void             slwTable_push(slwState* slw, slwTable* slt);
 SLW_API slwTableValue_t* slwTable_get_from_key(slwTable* slt, const char* key);
 SLW_API slwTable*        slwTable_get_at(slwState* slw, const int32_t idx);
-SLW_API SLW_INLINE slwTable* slwTable_get(slwState* slw);
+SLW_API slwTable* slwTable_get(slwState* slw);
 
 SLW_API void             slwTable_setval(slwTable* slt, ...);
 

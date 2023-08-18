@@ -1,6 +1,8 @@
+# Note to self: clang is slow at compiling and produces slower asm than gcc, at least for this project.
+
 # Compiler and flags
 CC := clang
-CFLAGS := -g -Wall -O0 -fsanitize=address -fno-omit-frame-pointer -std=c11 -Iinclude -Ilua/include
+CFLAGS := -g -Wall -O0 -fsanitize=address -fno-omit-frame-pointer -fsanitize-address-use-after-scope  -std=c11 -Iinclude -Ilua/include
 #CFLAGS := -g -Wall -O3 -std=c11 -Iinclude -Ilua/include
 LDFLAGS := -Llua/lib -llua54
 

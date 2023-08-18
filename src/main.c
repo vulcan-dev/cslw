@@ -1,6 +1,4 @@
-#define SLW_ENABLE_ASSERTIONS
 #include "cslw/cslw.h"
-#include "lua_code.h"
 
 #include <stdio.h>
 #include <stdlib.h>
