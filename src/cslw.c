@@ -1216,7 +1216,7 @@ SLW_API void slwState_settable2(slwState* slw, ...)
 }
 
 // Table Set Functions
-SLW_API void
+SLW_API SLW_INLINE void
 slwTable_setstring(slwTable* slt, const char* key, const char* val)
 {
     SLW_ASSERT(slt != NULL);
@@ -1254,49 +1254,49 @@ slwTable_setfstring(slwTable* slt, const char* name, const char* fmt, ...)
 }
 
 
-SLW_API void
+SLW_API SLW_INLINE void
 slwTable_setnumber(slwTable* slt, const char* name, double num)
 {
     SLW_ASSERT(slt != NULL);
     _slwTable_set_value(slt, name, slwt_tnumber(num));
 }
 
-SLW_API void
+SLW_API SLW_INLINE void
 slwTable_setint(slwTable* slt, const char* name, uint64_t num)
 {
     SLW_ASSERT(slt != NULL);
     _slwTable_set_value(slt, name, slwt_tnumber(num)); // Todo: make integer
 }
 
-SLW_API void
+SLW_API SLW_INLINE void
 slwTable_setbool(slwTable* slt, const char* name, bool b)
 {
     SLW_ASSERT(slt != NULL);
     _slwTable_set_value(slt, name, slwt_tboolean(b));
 }
 
-SLW_API void
+SLW_API SLW_INLINE void
 slwTable_setcfunction(slwTable* slt, const char* name, lua_CFunction fn)
 {
     SLW_ASSERT(slt != NULL);
     _slwTable_set_value(slt, name, slwt_tfunction(fn));
 }
 
-SLW_API void
+SLW_API SLW_INLINE void
 slwTable_setlightudata(slwTable* slt, const char* name, void* data)
 {
     SLW_ASSERT(slt != NULL);
     _slwTable_set_value(slt, name, slwt_tlightuserdata(data));
 }
 
-SLW_API void
+SLW_API SLW_INLINE void
 slwTable_settable(slwTable* slt, const char* name, slwTable* tbl)
 {
     SLW_ASSERT(slt != NULL);
     _slwTable_set_value(slt, name, slwt_ttable(tbl));
 }
 
-SLW_API void
+SLW_API SLW_INLINE void
 slwTable_setnil(slwTable* slt, const char* name)
 {
     SLW_ASSERT(slt != NULL);
