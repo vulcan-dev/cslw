@@ -1,6 +1,7 @@
 build/
 lua/include
 lua/lib
+lua/luajit
 
 cslw.10x
 debug.rdbg
